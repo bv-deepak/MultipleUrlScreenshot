@@ -1,3 +1,6 @@
+require 'opencv'
+include Magick
+include OpenCV
 class DiffCalculateJob
 
 	def reschedule_at(current_time, attempts)
@@ -5,6 +8,7 @@ class DiffCalculateJob
 	end
  
 	def perform
+		debugger
 		blogs = Blog.all
 		blogs.each do |blog|
 			pages = blog.pages
