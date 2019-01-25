@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  blog: one
+  page: one
+  snapshot: one
+  path_id: MyString
+  resp_code: 
+  ssid: MyString
+
+two:
+  blog: two
+  page: two
+  snapshot: two
+  path_id: MyString
+  resp_code: 
+  ssid: MyString
