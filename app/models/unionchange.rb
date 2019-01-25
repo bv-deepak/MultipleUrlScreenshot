@@ -2,9 +2,10 @@ class Unionchange < ApplicationRecord
  belongs_to :page
  serialize :coordinates, Array
 
- def updateUnionCoordinates(page, coordinates)
+ def self.updateUnionCoordinates(page, coordinates)
+ 	 debugger
 		union_changes = page.unionchanges
-		coordinates.each do |coordinate,value|
+		coordinates.each do |coordinate|
 			x1 = coordinate.first
 			y1 = coordinate.second
 			x2 = coordinate.third

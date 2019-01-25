@@ -8,7 +8,6 @@ class DiffCalculateJob
 	end
  
 	def perform
-		debugger
 		blogs = Blog.all
 		blogs.each do |blog|
 			pages = blog.pages
@@ -17,32 +16,31 @@ class DiffCalculateJob
 			end
 		end
 	rescue => e
-		put e
-	ensure
-		raise "Job retry"
+		puts e
 	end
 
 	def calculate_diff(page)
-		last_two_screenshots = page.screenshots.last(2)
+		
+		last_two_screenshots = Screenshot.where("page_id = ? AND message = ? ", page.id, "Successful")
 		uri = Addressable::URI.parse(page.url)    
 		screenshots_home_path = "#{Rails.root}/screenshots/" + uri.host
-		if  page.screenshots.count >= 2
+		if  last_two_screenshots.count == 2
 			src_screenshot_path = screenshots_home_path + "/#{last_two_screenshots.last.path_id}.jpg"
 			dest_screenshot_path = screenshots_home_path + "/#{last_two_screenshots.first.path_id}.jpg"
 			image1 = Image.read(src_screenshot_path).first
 			image2 = Image.read(dest_screenshot_path).first
-			coordinates = calculate_contours(page)
+			coordinates = calculate_contours(image1, image2, screenshots_home_path)
 			diff_image, diff_metric = image1.compare_channel( image2, Magick::AbsoluteErrorMetric)
 			percentage_diff = ((diff_metric * 100) / (image1.rows * image1.columns))
 			diff_image_path = "#{screenshots_home_path}/diffImages/" + "#{DateTime.now.to_i}.jpg"
 			diff_image.write(diff_image_path)
 			Diff.create(:page_id => page.id,
 						:src_screenshot_id => last_two_screenshots.last.id,
-						:dest_screenshot_id => last_two_screenshots.first.id,
+						:dest_screenshot_id => last_two_screenshots.first.id,	
 						:coordinates => coordinates,
 						:diff_image_path => diff_image_path,
-						:percentage_diff => percentage_diff)
-			Unionchange.updateUnionCoordinates(page, coordinate)
+						:percentage_change => percentage_diff)
+			Unionchange.updateUnionCoordinates(page, coordinates)
 		end
 	end
 
@@ -72,7 +70,7 @@ class DiffCalculateJob
 				contour = contour.h_next
 			end
 		end
-		return contour_hash
+		return contours_array
 	end
 
 end
