@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  page: one
+  coordinates: MyText
+  diff_image_path: MyString
+
+two:
+  page: two
+  coordinates: MyText
+  diff_image_path: MyString
