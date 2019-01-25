@@ -3,7 +3,7 @@ class Screenshot < ApplicationRecord
 	belongs_to :page
 	belongs_to :snapshot, optional: true
 
-	def self.capture_screenshot(url, blog_id, page_id, snap_id)
+	def self.capture_screenshot(url, blog_id, page_id, snap_id, ssid)
 		debugger
 		screenshot_path_id = DateTime.now.to_i
 		uri = Addressable::URI.parse(url)
@@ -37,6 +37,7 @@ class Screenshot < ApplicationRecord
 				 :path_id => screenshot_path_id,
 				 :snapshot_id => snap_id,
 				 :resp_code => resp_code,
+				 :ssid => ssid,
 				 :message => message)
 	end
 
