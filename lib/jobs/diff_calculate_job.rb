@@ -1,27 +1,22 @@
 require 'opencv'
 include Magick
 include OpenCV
-class DiffCalculateJob
+class DiffCalculateJob < Struct.new(:blog)
 
 	def reschedule_at(current_time, attempts)
 		current_time + 1.day
 	end
  
 	def perform
-		blogs = Blog.all
-		blogs.each do |blog|
 			pages = blog.pages
 			pages.each do |page|
 				calculate_diff(page) 
 			end
-		end
 	rescue => e
-		puts e
 	end
 
 	def calculate_diff(page)
-		
-		last_two_screenshots = Screenshot.where("page_id = ? AND message = ? ", page.id, "Successful")
+		last_two_screenshots = Screenshot.where("page_id = ? AND state = ? ", page.id, Screenshot::State::SUCCESSFULL)
 		uri = Addressable::URI.parse(page.url)    
 		screenshots_home_path = "#{Rails.root}/screenshots/" + uri.host
 		if  last_two_screenshots.count == 2
