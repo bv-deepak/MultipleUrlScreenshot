@@ -1,6 +1,5 @@
 class ScreenshotJob
 
-
 	def ssid
 		@ssid ||= SecureRandom.hex(8)
 	end
@@ -10,7 +9,6 @@ class ScreenshotJob
 	end
 
 	def perform(blog, snap_id)
-		debugger
 		pages = blog.pages
 		pages.each do |page|
 			screenshot = Screenshot.create( blog.id, page.id, snap_id, ssid)
@@ -30,7 +28,7 @@ class ScreenshotJob
 		if response.code == 200
 			result = JSON.parse(response.body)
 			screenshot_path_id = DateTime.now.to_i
-			latest_screenshot_path = screenshots_home_path + "/#{screenshot_path_id}.jpg" 
+			latest_screenshot_path = screenshots_home_path + "/#{screenshot_path_id}.jpg"
 			File.open(latest_screenshot_path, "wb+") {|f| f.write Base64.decode64(result["full_site_screenshot"])}
 			screenshot.path_id = screenshot_path_id
 			screenshot.resp_code = result["site_resp_code"]
@@ -39,9 +37,9 @@ class ScreenshotJob
 			screenshot.state = Screenshot::State::FAILED
 		end
 	rescue => e
-        logger.error("Screenshot_Failed ! :#{url}, " + "#{e}, #{e.message}")
-        screenshot.state = Screenshot::State::FAILED
-    ensure 
+		logger.error("Screenshot_Failed ! :#{url}, " + "#{e}, #{e.message}")
+		screenshot.state = Screenshot::State::FAILED
+	ensure
 		screenshot.save
 	end
 
@@ -53,7 +51,7 @@ class ScreenshotJob
 			password: "",
 			method: :post,
 			payload: query_params
-		})	
+		})
 		return response
 	end
 
