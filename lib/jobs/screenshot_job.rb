@@ -6,19 +6,18 @@ class ScreenshotJob
 	end
 
 	def logger
-		@logger ||= Logger.new("#{Rails.root}/log/my.log")
+		@logger ||= Logger.new("#{Rails.root}/log/Screenshot.log")
 	end
 
 	def perform(blog, snap_id)
-		ssid
-		logger
+		debugger
 		pages = blog.pages
 		pages.each do |page|
-			screenshot = Screenshot.create( blog.id, page.id, snap_id, @ssid)
+			screenshot = Screenshot.create( blog.id, page.id, snap_id, ssid)
 			capture_screenshot(page.url, screenshot)
 		end
 	rescue => e
-		@logger.error("#{e}....#{e.message}")
+		logger.error("#{e}....#{e.message}")
 	end
 
 	def capture_screenshot(url, screenshot)
@@ -40,7 +39,7 @@ class ScreenshotJob
 			screenshot.state = Screenshot::State::FAILED
 		end
 	rescue => e
-        @logger.error("Screenshot_Failed ! :#{url}, " + "#{e}, #{e.message}")
+        logger.error("Screenshot_Failed ! :#{url}, " + "#{e}, #{e.message}")
         screenshot.state = Screenshot::State::FAILED
     ensure 
 		screenshot.save
