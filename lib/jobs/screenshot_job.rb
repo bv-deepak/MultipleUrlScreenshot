@@ -1,4 +1,4 @@
-class ScreenshotJob
+class ScreenshotJob < Struct.new(:blog, :snap_id)
 
 	def ssid
 		@ssid ||= SecureRandom.hex(8)
@@ -8,23 +8,23 @@ class ScreenshotJob
 		@logger ||= Logger.new("#{Rails.root}/log/Screenshot.log")
 	end
 
-	def perform(blog, snap_id)
+	def perform
 		pages = blog.pages
 		pages.each do |page|
 			screenshot = Screenshot.create( blog.id, page.id, snap_id, ssid)
-			capture_screenshot(page.url, screenshot)
+			capture_screenshot(page, screenshot)
 		end
 	rescue => e
 		logger.error("#{e}....#{e.message}")
 	end
 
-	def capture_screenshot(url, screenshot)
-		uri = Addressable::URI.parse(url)
+	def capture_screenshot(page, screenshot)
+		uri = Addressable::URI.parse(page.url)
 		screenshots_home_path = "#{Rails.root}/screenshots/" + uri.host
 		if !File.exist?(screenshots_home_path)
 			Dir.mkdir(screenshots_home_path)
 		end
-		response = request(url)
+		response = Puppeteer.get_screenshot(page)
 		if response.code == 200
 			result = JSON.parse(response.body)
 			screenshot_path_id = DateTime.now.to_i
@@ -37,22 +37,10 @@ class ScreenshotJob
 			screenshot.state = Screenshot::State::FAILED
 		end
 	rescue => e
-		logger.error("Screenshot_Failed ! :#{url}, " + "#{e}, #{e.message}")
+		logger.error("Screenshot_Failed ! :#{page.url}, " + "#{e}, #{e.message}")
 		screenshot.state = Screenshot::State::FAILED
 	ensure
 		screenshot.save
-	end
-
-	def request(url)
-		query_params = {url: url, proxy: "", username: "", password: ""}
-		response = RestClient::Request.execute({
-			url: "127.0.0.1:8080/har_and_screenshot",
-			user: "",
-			password: "",
-			method: :post,
-			payload: query_params
-		})
-		return response
 	end
 
 end
