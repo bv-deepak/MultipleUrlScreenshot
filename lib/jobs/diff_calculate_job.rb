@@ -17,7 +17,6 @@ class DiffCalculateJob
 		blogs.each do |blog|
 			pages = blog.pages
 			pages.each do |page|
-				debugger
 				calculate_diff(page) 
 			end
 		end
@@ -83,7 +82,6 @@ class DiffCalculateJob
 	end
 
 	def update_union_coordinates(page, all_coordinates)
-		debugger
 		union_changes = page.unionchanges
 		all_coordinates.each do |coordinates|
 			x1 = coordinates.first
