@@ -10,13 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_01_31_095819) do
+ActiveRecord::Schema.define(version: 2019_02_01_075517) do
+
+  create_table "blog_settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "key"
+    t.text "value"
+    t.bigint "blog_id"
+    t.index ["blog_id"], name: "index_blog_settings_on_blog_id"
+  end
+
   create_table "blogs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "http_auth_user"
     t.string "http_auth_password"
     t.string "screenshots_path"
+    t.string "url"
   end
 
   create_table "diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|

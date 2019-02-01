@@ -13,7 +13,7 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def perform
-		blog.urls.each{ |url|  perform_for_url(url) }
+		blog.page_urls.each{ |url|  perform_for_url(url) }
 	rescue => e
 		logger.error("Blog_id: #{blog.id}...#{e.message}..#{e.backtrace}")
 	end
