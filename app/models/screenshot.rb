@@ -4,10 +4,10 @@ class Screenshot < ApplicationRecord
   
 	def self.create(blog_id, url, snap_id, ssid)
 		screenshot = Screenshot.new(:blog_id => blog_id,
-										:url => url,
-										:snapshot_id => snap_id,
-										:ssid => ssid,
-										)
+						:url => url,
+						:snapshot_id => snap_id,
+						:ssid => ssid,
+						)
 		screenshot.save
 		return screenshot
 	end
