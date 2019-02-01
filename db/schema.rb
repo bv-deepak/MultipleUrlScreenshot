@@ -10,17 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_01_28_074354) do
-
+ActiveRecord::Schema.define(version: 2019_01_31_095819) do
   create_table "blogs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "http_auth_user"
     t.string "http_auth_password"
+    t.string "screenshots_path"
   end
 
   create_table "diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.bigint "page_id"
     t.text "coordinates"
     t.string "diff_image_path"
     t.datetime "created_at", null: false
@@ -28,22 +27,13 @@ ActiveRecord::Schema.define(version: 2019_01_28_074354) do
     t.float "percentage_change"
     t.bigint "src_screenshot_id"
     t.bigint "dest_screenshot_id"
-    t.index ["dest_screenshot_id"], name: "fk_rails_fa9d39b035"
-    t.index ["page_id"], name: "index_diffs_on_page_id"
-    t.index ["src_screenshot_id"], name: "fk_rails_7d66abc544"
-  end
-
-  create_table "pages", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.bigint "blog_id"
     t.string "url"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["blog_id"], name: "index_pages_on_blog_id"
+    t.index ["dest_screenshot_id"], name: "fk_rails_fa9d39b035"
+    t.index ["src_screenshot_id"], name: "fk_rails_7d66abc544"
   end
 
   create_table "screenshots", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.bigint "blog_id"
-    t.bigint "page_id"
     t.bigint "snapshot_id"
     t.string "path_id"
     t.integer "resp_code"
@@ -51,8 +41,8 @@ ActiveRecord::Schema.define(version: 2019_01_28_074354) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "state"
+    t.string "url"
     t.index ["blog_id"], name: "index_screenshots_on_blog_id"
-    t.index ["page_id"], name: "index_screenshots_on_page_id"
     t.index ["snapshot_id"], name: "index_screenshots_on_snapshot_id"
   end
 
@@ -64,20 +54,15 @@ ActiveRecord::Schema.define(version: 2019_01_28_074354) do
   end
 
   create_table "unionchanges", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
-    t.bigint "page_id"
     t.text "coordinates"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["page_id"], name: "index_unionchanges_on_page_id"
+    t.string "url"
   end
 
-  add_foreign_key "diffs", "pages"
   add_foreign_key "diffs", "screenshots", column: "dest_screenshot_id"
   add_foreign_key "diffs", "screenshots", column: "src_screenshot_id"
-  add_foreign_key "pages", "blogs"
   add_foreign_key "screenshots", "blogs"
-  add_foreign_key "screenshots", "pages"
   add_foreign_key "screenshots", "snapshots"
   add_foreign_key "snapshots", "blogs"
-  add_foreign_key "unionchanges", "pages"
 end
