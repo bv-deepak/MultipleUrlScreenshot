@@ -9,7 +9,6 @@ class ScreenshotJob < Struct.new(:blog, :snap_id)
 	end
 
 	def perform
-		debugger
 		screenshots_path = blog.screenshots_path
 		if !File.exist?(screenshots_path)
 			Dir.mkdir(screenshots_path)
