@@ -2,14 +2,14 @@ class Screenshot < ApplicationRecord
 	belongs_to :blog
 	belongs_to :snapshot, optional: true
   
-	def self.create(blog_id, url, snap_id, ssid)
+	def self.create(blog_id, url, snap_id, gid)
 		screenshot = Screenshot.new(:blog_id => blog_id,
 					:url => url,
 					:snapshot_id => snap_id,
-					:ssid => ssid,
+					:gid => gid,
 					)
 		screenshot.save
-		return screenshot
+		screenshot
 	end
 
 	def self.get_screenshots(url)

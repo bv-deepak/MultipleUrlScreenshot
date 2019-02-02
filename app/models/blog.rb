@@ -4,17 +4,28 @@ class Blog < ApplicationRecord
 	has_many :settings
 
 	def page_urls
-		urls = get_setting(Blog::Setting::Key::PAGE_URLS)[urls]
-		if urls
-			return urls
-		else
-			return ["#{url}"]
-		end
+		get_setting(Blog::Setting::Key::PAGE_URLS)["urls"] || [] << self.url 
 	end
 
 	def get_setting(key)
 		setting = settings.where(:key => key).first
 		setting ? setting.value : {}
+	end
+
+	def get_screenshots_dir_path
+		"#{Rails.root}/screenshots"
+	end
+
+	def get_diff_images_dir_path
+		"#{Rails.root}/screenshots/diff_images"
+	end
+
+	def screenshot_path(key)
+		get_screenshots_dir_path + "/#{key}.jpg"
+	end
+
+	def diff_image_path(key)
+		get_diff_images_dir_path + "/#{key}.jpg"
 	end
 
 	def update_setting(key, value)

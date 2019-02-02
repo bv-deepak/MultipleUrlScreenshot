@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_01_075517) do
+ActiveRecord::Schema.define(version: 2019_02_01_141504) do
 
   create_table "blog_settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -26,13 +26,12 @@ ActiveRecord::Schema.define(version: 2019_02_01_075517) do
     t.datetime "updated_at", null: false
     t.string "http_auth_user"
     t.string "http_auth_password"
-    t.string "screenshots_path"
     t.string "url"
   end
 
   create_table "diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.text "coordinates"
-    t.string "diff_image_path"
+    t.string "gid"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.float "percentage_change"
@@ -46,9 +45,8 @@ ActiveRecord::Schema.define(version: 2019_02_01_075517) do
   create_table "screenshots", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.bigint "blog_id"
     t.bigint "snapshot_id"
-    t.string "path_id"
     t.integer "resp_code"
-    t.string "ssid"
+    t.string "gid"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "state"
