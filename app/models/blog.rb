@@ -12,20 +12,20 @@ class Blog < ApplicationRecord
 		setting ? setting.value : {}
 	end
 
-	def get_screenshots_dir_path
+	def get_screenshots_dir
 		"#{Rails.root}/screenshots"
 	end
 
-	def get_diff_images_dir_path
+	def get_diff_images_dir
 		"#{Rails.root}/screenshots/diff_images"
 	end
 
 	def screenshot_path(key)
-		get_screenshots_dir_path + "/#{key}.jpg"
+		get_screenshots_dir + "/#{key}.jpg"
 	end
 
 	def diff_image_path(key)
-		get_diff_images_dir_path + "/#{key}.jpg"
+		get_diff_images_dir + "/#{key}.jpg"
 	end
 
 	def update_setting(key, value)
