@@ -29,7 +29,7 @@ class DiffCalculateJob < Struct.new(:blog)
 
 	def create_diff(url)
 		src, dest = Screenshot.where("url = ? AND state = ?", url,
-																 Screenshot::State::SUCCESSFUL).last(2)
+		            		Screenshot::State::SUCCESSFUL).last(2)
 		return if !src || !dest
 		coordinates, iid, change_percent = calculate_diff(src, dest)
 		Diff.create(url, src.id, dest.id, coordinates, iid, change_percent)
@@ -53,12 +53,12 @@ class DiffCalculateJob < Struct.new(:blog)
 		dest_image = read_image(dest_path)
 		coordinates = get_diff_coordinates(src_image, dest_image)
 		diff_image, diff_metric = src_image.compare_channel(dest_image, Magick::AbsoluteErrorMetric)
-		change_percent = calculate_percentage_diff(diff_metric, diff_image)
+		change_percent = calculate_diff_percentage(diff_metric, diff_image)
 		iid = write_diff_image(diff_image)
 		[coordinates, iid, change_percent]
 	end
 
-	def calculate_percentage_diff(diff_metric, image)
+	def calculate_diff_percentage(diff_metric, image)
 		((diff_metric * 100) / (image.rows * image.columns))
 	end
 
@@ -127,9 +127,9 @@ class DiffCalculateJob < Struct.new(:blog)
 
 	def intersecting?(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
 		if (((ux1 <= x1 && x1 <= ux2 || ux1 <= x2 && x2 <= ux2) ||
-					((x1 <= ux1 && ux1 <= x2) && (x1 <= ux2 && ux2 <= x2))) &&
-				  ((uy1 <= y1 && y1 <= uy2 || uy1 <= y2 && y2 <= uy2) ||
-				  ((y1 <= uy1 && uy1 <= y2) && (y1 <= uy2 && uy2 <= y2))))
+				((x1 <= ux1 && ux1 <= x2) && (x1 <= ux2 && ux2 <= x2))) &&
+				((uy1 <= y1 && y1 <= uy2 || uy1 <= y2 && y2 <= uy2) ||
+				((y1 <= uy1 && uy1 <= y2) && (y1 <= uy2 && uy2 <= y2))))
 			return true
 		end
 		false
