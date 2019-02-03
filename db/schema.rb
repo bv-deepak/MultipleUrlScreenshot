@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_01_141504) do
+ActiveRecord::Schema.define(version: 2019_02_02_074005) do
 
   create_table "blog_settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -31,7 +31,7 @@ ActiveRecord::Schema.define(version: 2019_02_01_141504) do
 
   create_table "diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.text "coordinates"
-    t.string "gid"
+    t.string "iid"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.float "percentage_change"

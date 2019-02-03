@@ -5,13 +5,16 @@ class ScreenshotJob < Struct.new(:blog, :snap_id)
 	end
   
 	def perform
-		screenshots_path = blog.get_screenshots_dir_path
-		FileUtils.mkdir_p(screenshots_path) if !File.directory?(screenshots_path)
+		screenshots_path = blog.get_screenshots_dir
+		FileUtils.mkdir_p(screenshots_path)
 		blog.page_urls.each{ |url|
-			screenshot = Screenshot.create( blog.id, url, snap_id, SecureRandom.hex)
-			capture_screenshot(url, screenshot)}
-	rescue => e
-		logger.error("Blog_id: #{blog.id}...url: #{url}... #{e.message}....#{e.backtrace}")
+			begin
+				screenshot = Screenshot.create( blog.id, url, snap_id, SecureRandom.hex)
+				capture_screenshot(url, screenshot)
+			rescue => e
+				logger.error("Blog_id: #{blog.id}...url: #{url}... #{e.message}....#{e.backtrace}")
+			end
+		}
 	end
 
 	def capture_screenshot(url, screenshot)
