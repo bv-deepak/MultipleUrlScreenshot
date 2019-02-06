@@ -28,9 +28,10 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def create_diff(url)
+		has_new_screenshot = (Screenshot.where(:url => url).pluck(:state) == Screenshot::State::SUCCESSFUL) ? true : false
 		src, dest = Screenshot.where("url = ? AND state = ?", url,
 		            		Screenshot::State::SUCCESSFUL).last(2)
-		return if !src || !dest
+		return if (!has_new_screenshot || (!src || !dest))
 		coordinates, iid, change_percent = calculate_diff(src, dest)
 		Diff.create(url, src.id, dest.id, coordinates, iid, change_percent)
 	end
@@ -42,7 +43,7 @@ class DiffCalculateJob < Struct.new(:blog)
 	def write_diff_image(image)
 		iid = SecureRandom.hex(16)
 		image_path = blog.diff_image_path(iid)
-		image.write(diff_image_path)
+		image.write(image_path)
 		iid
 	end
 
@@ -69,41 +70,33 @@ class DiffCalculateJob < Struct.new(:blog)
 	def constitute_bitmap_image(src_image, dest_image)
 		src_pixels = get_pixels(src_image)
 		dest_pixels = get_pixels(dest_image)
+		bigger_image = (src_pixels.count > dest_pixels.count) ? src_image : dest_image
 		iter = [src_pixels.count, dest_pixels.count].max
 		(0...iter).each { |i|
 				dest_pixels[i] = (src_pixels[i] == dest_pixels[i]) ? 0.0 : 1.0
 		}
-		bigger_image = (src_pixels.count > dest_pixels.count) ? src_image : dest_image
 		rows, columns = [bigger_image.rows, bigger_image.columns]
 		bitmap_image = Image.constitute(columns, rows, "I", dest_pixels)
+		bitmap_image.write("#{DateTime.now.to_i}.jpg")
 		file = Tempfile.new(['bitmap_image', '.jpg'])
 		bitmap_image.write(file.path)
 		file
+	rescue => e
+		logger .error("#{e}====#{e.message}")
 	end
 
 	def get_diff_coordinates(src_image, dest_image)
 		temp_file = constitute_bitmap_image(src_image, dest_image)
-		bitmap_image = CvMat.load(temp_file.path)
-		kernel = IplConvKernel.new(14, 14, 7 , 7, :rect)
-		bitmap_image = bitmap_image.BGR2GRAY
-		bitmap_image_morpholized = bitmap_image.morphology(CV_MOP_CLOSE , kernel , 1)
-		contours = bitmap_image_morpholized.find_contours(:mode => OpenCV::CV_RETR_EXTERNAL,
-				:method => OpenCV::CV_CHAIN_APPROX_NONE)
-		cvpoints_to_array(contours)
+		response = Puppeteer.get_diff_coordinates(temp_file.path)
+		if response.code == 200
+			result = JSON.parse(response.body)
+			return result["coordinates"]
+		end
+	rescue => e
+		logger.error("===#{url}===#{e}-#{e.message}-#{e.backtrace}")
+		raise e 
 	ensure
 		temp_file.unlink
-	end
-
-	def cvpoints_to_array(contours)
-		array = Array.new
-		while contours
-			unless contours.hole?
-				rect = contours.bounding_rect
-				array << [rect.top_left.x, rect.top_left.y, rect.bottom_right.x, rect.bottom_right.y]
-				contours = contours.h_next
-			end
-		end
-		array
 	end
 
 	def update_union_coordinates(url, all_coordinates)
@@ -114,9 +107,10 @@ class DiffCalculateJob < Struct.new(:blog)
 				x1, y1, x2, y2 = coordinates
 				union_changes.each { |union_change|
 					ux1, uy1, ux2, uy2 = union_change.coordinates
-					if intersecting?(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
+					if is_intersecting(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
 						has_new_union = false
 						union_change.coordinates = update_values(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
+						union_change.count+=1
 						union_change.save
 					end
 				}
@@ -125,7 +119,7 @@ class DiffCalculateJob < Struct.new(:blog)
 		}	
 	end
 
-	def intersecting?(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
+	def is_intersecting(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
 		if (((ux1 <= x1 && x1 <= ux2 || ux1 <= x2 && x2 <= ux2) ||
 				((x1 <= ux1 && ux1 <= x2) && (x1 <= ux2 && ux2 <= x2))) &&
 				((uy1 <= y1 && y1 <= uy2 || uy1 <= y2 && y2 <= uy2) ||
@@ -136,18 +130,10 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def update_values(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
-		if ux1 > x1
-			ux1 = x1
-		end
-		if ux2 < x2
-			ux2 = x2
-		end
-		if uy1 > y1
-			uy1 = y1
-		end
-		if uy2 < y2
-			uy2 = y2
-		end
+		ux1 = (ux1 > x1)? x1 : ux1
+		ux2 = (ux2 < x2)? x2 : ux2
+		uy1 = (uy1 > y1)? y1 : uy1
+		uy2 = (uy2 < y2)? y2 : uy2
 		[ux1, uy1, ux2, uy2]
 	end
 

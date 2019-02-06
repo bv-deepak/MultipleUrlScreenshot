@@ -2,7 +2,7 @@ class Unionchange < ApplicationRecord
 	serialize :coordinates, Array
   
 	def self.create(url, coordinates)
-		union_change = Unionchange.new(:url => url, :coordinates => coordinates)
+		union_change = Unionchange.new(:url => url, :coordinates => coordinates, :count => 1)
 		union_change.save
 	end
 
