@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_02_074005) do
+ActiveRecord::Schema.define(version: 2019_02_06_133046) do
 
   create_table "blog_settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -67,6 +67,7 @@ ActiveRecord::Schema.define(version: 2019_02_02_074005) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "url"
+    t.integer "count"
   end
 
   add_foreign_key "diffs", "screenshots", column: "dest_screenshot_id"

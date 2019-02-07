@@ -1,5 +1,5 @@
 class Add < ActiveRecord::Migration[5.2]
-  def change
+  def change 
     add_column :diffs, :percentage_change, :float
   	add_column :diffs, :src_screenshot_id, :bigint
   	add_column :diffs, :dest_screenshot_id, :bigint 

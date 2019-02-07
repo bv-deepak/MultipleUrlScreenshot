@@ -24,4 +24,10 @@ class Puppeteer
 		get_response('har_and_screenshot', query_params)
 	end
 
+	def self.get_diff_coordinates(bitmap_image_path)
+		query_params = {
+        	image: File.new(bitmap_image_path, 'rb')
+		}
+		get_response('get_diff_coordinates', query_params)
+	end
 end
