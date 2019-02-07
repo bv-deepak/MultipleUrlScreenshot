@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_06_133046) do
+ActiveRecord::Schema.define(version: 2019_02_07_094438) do
 
   create_table "blog_settings", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -29,9 +29,9 @@ ActiveRecord::Schema.define(version: 2019_02_06_133046) do
     t.string "url"
   end
 
-  create_table "diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "screenshot_diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.text "coordinates"
-    t.string "iid"
+    t.string "image_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.float "percentage_change"
@@ -62,16 +62,16 @@ ActiveRecord::Schema.define(version: 2019_02_06_133046) do
     t.index ["blog_id"], name: "index_snapshots_on_blog_id"
   end
 
-  create_table "unionchanges", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
+  create_table "union_diffs", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.text "coordinates"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "url"
-    t.integer "count"
+    t.integer "count", default: 1
   end
 
-  add_foreign_key "diffs", "screenshots", column: "dest_screenshot_id"
-  add_foreign_key "diffs", "screenshots", column: "src_screenshot_id"
+  add_foreign_key "screenshot_diffs", "screenshots", column: "dest_screenshot_id"
+  add_foreign_key "screenshot_diffs", "screenshots", column: "src_screenshot_id"
   add_foreign_key "screenshots", "blogs"
   add_foreign_key "screenshots", "snapshots"
   add_foreign_key "snapshots", "blogs"

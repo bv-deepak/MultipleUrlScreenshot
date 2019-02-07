@@ -13,11 +13,12 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def perform
+
 		FileUtils.mkdir_p(blog.get_diff_images_dir)
 		blog.page_urls.each { |url|
 			begin
 				diff = create_diff(url)
-				update_union_coordinates(url, diff.coordinates)
+				update_union_coordinates(url, diff.coordinates) if diff
 			rescue =>e
 				logger.error("Diff_calculation_failed!...Blog_id: #{blog.id}, #{url}..."\
 						"#{e.message}..#{e.backtrace}")
@@ -28,12 +29,14 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def create_diff(url)
-		has_new_screenshot = (Screenshot.where(:url => url).pluck(:state) == Screenshot::State::SUCCESSFUL) ? true : false
-		src, dest = Screenshot.where("url = ? AND state = ?", url,
-		            		Screenshot::State::SUCCESSFUL).last(2)
-		return if (!has_new_screenshot || (!src || !dest))
-		coordinates, iid, change_percent = calculate_diff(src, dest)
-		Diff.create(url, src.id, dest.id, coordinates, iid, change_percent)
+		has_new_screenshot = (Screenshot.where(:url => url).last.state ==
+				Screenshot::State::SUCCESSFUL) ? true : false
+		src, dest = Screenshot.where(
+				:url => url, 
+				:state => Screenshot::State::SUCCESSFUL).last(2)
+		return if (!has_new_screenshot || !(src && dest))
+		coordinates, image_id, change_percent = calculate_diff(src, dest)
+		ScreenshotDiff.create(url, src.id, dest.id, coordinates, image_id, change_percent)
 	end
 
 	def read_image(path)
@@ -41,10 +44,10 @@ class DiffCalculateJob < Struct.new(:blog)
 	end
 
 	def write_diff_image(image)
-		iid = SecureRandom.hex(16)
-		image_path = blog.diff_image_path(iid)
+		image_id = SecureRandom.hex(16)
+		image_path = blog.diff_image_path(image_id)
 		image.write(image_path)
-		iid
+		image_id
 	end
 
 	def calculate_diff(src, dest)
@@ -54,12 +57,12 @@ class DiffCalculateJob < Struct.new(:blog)
 		dest_image = read_image(dest_path)
 		coordinates = get_diff_coordinates(src_image, dest_image)
 		diff_image, diff_metric = src_image.compare_channel(dest_image, Magick::AbsoluteErrorMetric)
-		change_percent = calculate_diff_percentage(diff_metric, diff_image)
-		iid = write_diff_image(diff_image)
-		[coordinates, iid, change_percent]
+		change_percent = calculate_percentage_diff(diff_metric, diff_image)
+		image_id = write_diff_image(diff_image)
+		[coordinates, image_id, change_percent]
 	end
 
-	def calculate_diff_percentage(diff_metric, image)
+	def calculate_percentage_diff(diff_metric, image)
 		((diff_metric * 100) / (image.rows * image.columns))
 	end
 
@@ -73,57 +76,53 @@ class DiffCalculateJob < Struct.new(:blog)
 		bigger_image = (src_pixels.count > dest_pixels.count) ? src_image : dest_image
 		iter = [src_pixels.count, dest_pixels.count].max
 		(0...iter).each { |i|
-				dest_pixels[i] = (src_pixels[i] == dest_pixels[i]) ? 0.0 : 1.0
+			dest_pixels[i] = (src_pixels[i] == dest_pixels[i]) ? 0.0 : 1.0
 		}
 		rows, columns = [bigger_image.rows, bigger_image.columns]
 		bitmap_image = Image.constitute(columns, rows, "I", dest_pixels)
-		bitmap_image.write("#{DateTime.now.to_i}.jpg")
 		file = Tempfile.new(['bitmap_image', '.jpg'])
 		bitmap_image.write(file.path)
 		file
-	rescue => e
-		logger .error("#{e}====#{e.message}")
 	end
 
 	def get_diff_coordinates(src_image, dest_image)
 		temp_file = constitute_bitmap_image(src_image, dest_image)
 		response = Puppeteer.get_diff_coordinates(temp_file.path)
 		if response.code == 200
-			result = JSON.parse(response.body)
-			return result["coordinates"]
+			out = JSON.parse(response.body)
+			return out["coordinates"]
+		else
+			raise 'diff_coordinates_calculation_failed'
 		end
-	rescue => e
-		logger.error("===#{url}===#{e}-#{e.message}-#{e.backtrace}")
-		raise e 
 	ensure
 		temp_file.unlink
 	end
 
 	def update_union_coordinates(url, all_coordinates)
-		union_changes = Unionchange.unionchanges(url)
+		union_diffs = UnionDiff.union_diffs(url)
 		all_coordinates.each { |coordinates|
 			has_new_union = true
-			if !union_changes.empty?
+			if !union_diffs.empty?
 				x1, y1, x2, y2 = coordinates
-				union_changes.each { |union_change|
-					ux1, uy1, ux2, uy2 = union_change.coordinates
+				union_diffs.each { |union_diff|
+					ux1, uy1, ux2, uy2 = union_diff.coordinates
 					if is_intersecting(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
 						has_new_union = false
-						union_change.coordinates = update_values(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
-						union_change.count+=1
-						union_change.save
+						union_diff.coordinates = update_values(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
+						union_diff.count += 1
+						union_diff.save
 					end
 				}
 			end
-			Unionchange.create(url, coordinates) if has_new_union
-		}	
+			UnionDiff.create(url, coordinates) if has_new_union
+		}
 	end
 
 	def is_intersecting(ux1, uy1, ux2, uy2, x1, y1, x2, y2)
 		if (((ux1 <= x1 && x1 <= ux2 || ux1 <= x2 && x2 <= ux2) ||
-				((x1 <= ux1 && ux1 <= x2) && (x1 <= ux2 && ux2 <= x2))) &&
-				((uy1 <= y1 && y1 <= uy2 || uy1 <= y2 && y2 <= uy2) ||
-				((y1 <= uy1 && uy1 <= y2) && (y1 <= uy2 && uy2 <= y2))))
+				 ((x1 <= ux1 && ux1 <= x2) && (x1 <= ux2 && ux2 <= x2))) &&
+				 ((uy1 <= y1 && y1 <= uy2 || uy1 <= y2 && y2 <= uy2) ||
+	  		 ((y1 <= uy1 && uy1 <= y2) && (y1 <= uy2 && uy2 <= y2))))
 			return true
 		end
 		false
